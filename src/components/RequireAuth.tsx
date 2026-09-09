@@ -9,7 +9,7 @@ export function RequireAuth({ children }: { children: ReactNode }) {
 
   if (isLoading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[oklch(0.96_0.015_250)] via-[oklch(0.97_0.01_270)] to-[oklch(0.95_0.015_260)]">
+      <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[oklch(0.2_0.06_278)] via-[oklch(0.17_0.055_270)] to-[oklch(0.15_0.05_285)]">
         <Loader2 className="size-6 animate-spin text-primary" />
       </main>
     );

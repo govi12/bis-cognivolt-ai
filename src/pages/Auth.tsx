@@ -116,7 +116,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                     <div className="glass-panel rounded-2xl p-3">
                       <img
                         src={logo}
-                        alt="Cognivolt AI"
+                        alt="BIS Cognivolt AI"
                         width={48}
                         height={48}
                         className="rounded-xl cursor-pointer"
@@ -127,7 +127,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                   <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/8 px-3 py-1 mb-4">
                     <Sparkles className="w-3 h-3 text-primary" />
                     <span className="text-xs font-medium text-primary">
-                      Cognivolt AI
+                      BIS Cognivolt AI
                     </span>
                   </div>
                   <h1 className="text-xl font-bold text-foreground">

@@ -1,24 +1,21 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import CatalogBrowser from "@/components/CatalogBrowser";
 import {
   Home,
-  FolderOpen,
+  BookOpen,
   CheckSquare,
   Calculator,
   Send,
   Loader2,
   LogOut,
-  ChevronDown,
-  ChevronRight,
-  Info,
-  AlertTriangle,
-  ArrowRight,
   Sparkles,
   Shield,
+  Languages,
 } from "lucide-react";
 
 // ==================== DATA ====================
@@ -26,257 +23,13 @@ import {
 const SAMPLE_QUESTIONS = [
   "What is an ISI mark?",
   "How do I apply for BIS certification?",
-  "What standard applies to two-wheeler helmets?",
-  "What does hallmarking mean for gold?",
+  "Which standard applies to two-wheeler helmets?",
+  "What does the HUID code on gold jewellery mean?",
   "What is the CRS scheme for electronics?",
-  "What are the fee concessions for MSMEs?",
+  "MSMEs को marking fee में कितनी छूट मिलती है?",
   "How do I find a BIS-recognized testing lab?",
-  "What is the HUID code in hallmarking?",
+  "BIS license యొక్క చెల్లుబాటు కాలం ఎంత?",
 ];
-
-const CATEGORIES: Record<
-  string,
-  Record<string, { scheme: string; is: string; entries: number[] }>
-> = {
-  "Electrical & Electronics": {
-    "LED Lamps (self-ballasted)": {
-      scheme: "CRS",
-      is: "IS 16102",
-      entries: [30],
-    },
-    "LED Luminaires (street, flood, downlight)": {
-      scheme: "CRS",
-      is: "IS 10322 Parts 5-1 to 5-6",
-      entries: [31],
-    },
-    "Electric Fans (ceiling, table, pedestal)": {
-      scheme: "ISI",
-      is: "IS 374",
-      entries: [19],
-    },
-    "PVC Insulated Cables (up to 1100V)": {
-      scheme: "ISI",
-      is: "IS 694",
-      entries: [20],
-    },
-    "Switches for Household Use": {
-      scheme: "ISI",
-      is: "IS 3854",
-      entries: [21],
-    },
-    "Energy Meters (static)": {
-      scheme: "CRS",
-      is: "IS 13779, IS 16444",
-      entries: [45],
-    },
-    "Electric Irons": { scheme: "ISI", is: "IS 366", entries: [46] },
-    "Mixer Grinders": { scheme: "ISI", is: "IS 4250", entries: [47] },
-    "Room Air Conditioners": { scheme: "CRS", is: "IS 1391", entries: [48] },
-    Refrigerators: { scheme: "CRS", is: "IS 1391 Part 2", entries: [49] },
-    "Washing Machines": {
-      scheme: "CRS",
-      is: "IS 1391 Part 3",
-      entries: [50],
-    },
-    "Microwave Ovens": { scheme: "CRS", is: "IS 11676", entries: [51] },
-    "Audio/Video Equipment (TVs, monitors)": {
-      scheme: "CRS",
-      is: "IS 616 / IEC 60065",
-      entries: [52],
-    },
-    "Plugs and Socket-Outlets": { scheme: "ISI", is: "IS 1293", entries: [53] },
-    "Circuit Breakers (MCB/RCCB)": {
-      scheme: "ISI",
-      is: "IS 8828, IS 12640",
-      entries: [54],
-    },
-  },
-  "Construction Materials": {
-    "Cement — Ordinary Portland (OPC 33/43/53)": {
-      scheme: "ISI",
-      is: "IS 269, IS 455, IS 1489",
-      entries: [23],
-    },
-    "Steel Bars for Concrete Reinforcement": {
-      scheme: "ISI",
-      is: "IS 1786",
-      entries: [24],
-    },
-    "Steel Pipes for Water/Gas": {
-      scheme: "ISI",
-      is: "IS 1239, IS 3589",
-      entries: [25],
-    },
-    "UPVC Pipes for Water Supply": {
-      scheme: "ISI",
-      is: "IS 4985",
-      entries: [26],
-    },
-    "CPVC Pipes for Hot/Cold Water": {
-      scheme: "ISI",
-      is: "IS 15778",
-      entries: [27],
-    },
-    "Stainless Steel Sheets/Plates": {
-      scheme: "ISI",
-      is: "IS 6911",
-      entries: [41],
-    },
-    "Stainless Steel Bars/Wire": {
-      scheme: "ISI",
-      is: "IS 1570, IS 6529, IS 3444",
-      entries: [42],
-    },
-    "Aluminium Conductors (AAC/AAAC/ACSR)": {
-      scheme: "ISI",
-      is: "IS 398",
-      entries: [43],
-    },
-  },
-  Automotive: {
-    "Two-Wheeler Helmets": {
-      scheme: "ISI",
-      is: "IS 4151:2015",
-      entries: [29],
-    },
-    "Cycle Helmets": { scheme: "ISI", is: "IS 10865", entries: [76] },
-    "Tyres (Car/Truck/Bus)": {
-      scheme: "ISI",
-      is: "IS 15633, IS 15636",
-      entries: [57],
-    },
-    "Safety Glass (Windscreen/Window)": {
-      scheme: "ISI",
-      is: "IS 2553 Part 1",
-      entries: [58],
-    },
-    "Brake Linings": { scheme: "ISI", is: "IS 2573", entries: [59] },
-    "Automotive Lighting": {
-      scheme: "ISI",
-      is: "IS 15588, IS 15589",
-      entries: [56],
-    },
-  },
-  "LPG & Gas Appliances": {
-    "LPG Cylinders (>5L)": {
-      scheme: "ISI",
-      is: "IS 3196 Part 1",
-      entries: [8],
-    },
-    "LPG Cylinders (<5L)": { scheme: "ISI", is: "IS 7142", entries: [94] },
-    "LPG Domestic Gas Stoves": {
-      scheme: "ISI",
-      is: "IS 4246",
-      entries: [22],
-    },
-    "LPG Rubber Hoses": { scheme: "ISI", is: "IS 9573", entries: [91] },
-    "LPG Regulators (Domestic)": {
-      scheme: "ISI",
-      is: "IS 9798",
-      entries: [92],
-    },
-    "CNG Cylinders (Vehicular)": {
-      scheme: "ISI",
-      is: "IS 15490",
-      entries: [95],
-    },
-  },
-  "Food, Water & Infant Products": {
-    "Packaged Drinking Water": {
-      scheme: "ISI",
-      is: "IS 14543",
-      entries: [38],
-    },
-    "Packaged Natural Mineral Water": {
-      scheme: "ISI",
-      is: "IS 13428",
-      entries: [39],
-    },
-    "Milk Powder": { scheme: "ISI", is: "IS 1165", entries: [40] },
-    "Infant Milk Substitutes": {
-      scheme: "ISI",
-      is: "IS 14433",
-      entries: [40],
-    },
-  },
-  "Toys & Safety Equipment": {
-    "Toys (Mechanical/Physical Safety)": {
-      scheme: "ISI/CRS",
-      is: "IS 9873 Part 1",
-      entries: [28],
-    },
-    "Toys (Chemical Safety)": {
-      scheme: "ISI/CRS",
-      is: "IS 9873 Parts 3 & 9",
-      entries: [28],
-    },
-    "Industrial Safety Helmets": {
-      scheme: "ISI",
-      is: "IS 2925:1984",
-      entries: [81],
-    },
-    "Firefighter Helmets": {
-      scheme: "ISI",
-      is: "IS 2745:1983",
-      entries: [82],
-    },
-    "School Bags": { scheme: "ISI", is: "IS 15824", entries: [77] },
-  },
-  "Hallmarking & Jewellery": {
-    "Gold Hallmarking (22K/18K/14K/9K)": {
-      scheme: "Hallmarking",
-      is: "IS 1417",
-      entries: [6, 60, 114, 115],
-    },
-    "Silver Hallmarking": {
-      scheme: "Hallmarking",
-      is: "IS 2112",
-      entries: [6, 60],
-    },
-    "Jeweller Registration": {
-      scheme: "Hallmarking",
-      is: "Form-V on manakonline.in",
-      entries: [114],
-    },
-  },
-  "Industrial & Specialized": {
-    "Pressure Cookers (Aluminium/SS)": {
-      scheme: "ISI",
-      is: "IS 2347, IS 4251",
-      entries: [17],
-    },
-    "Domestic Water Heaters (Electric)": {
-      scheme: "ISI",
-      is: "IS 302-2-35",
-      entries: [18],
-    },
-    "Distribution Transformers": {
-      scheme: "ISI",
-      is: "IS 1180",
-      entries: [44],
-    },
-    "Lithium-Ion Batteries": {
-      scheme: "CRS",
-      is: "IS 16046",
-      entries: [32],
-    },
-    "Inverters/UPS (up to 10 kVA)": {
-      scheme: "CRS",
-      is: "IS 16221",
-      entries: [33],
-    },
-    "Solar PV Modules": {
-      scheme: "CRS",
-      is: "IS 14286, IS 16170",
-      entries: [34],
-    },
-    "Fire Extinguishers": {
-      scheme: "ISI",
-      is: "IS 15683, IS 16018",
-      entries: [88],
-    },
-  },
-};
 
 const CHECKLISTS: Record<string, string[]> = {
   "ISI Mark (Scheme-I)": [
@@ -359,11 +112,13 @@ function ChatTab() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const autoAskedRef = useRef(false);
+  const [searchParams, setSearchParams] = useSearchParams();
   const sendMessage = useAction(api.chat.sendMessage);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, isLoading]);
 
   const handleSubmit = async (question?: string) => {
     const q = question || input.trim();
@@ -400,6 +155,18 @@ function ChatTab() {
     }
   };
 
+  // Auto-ask a question passed via ?q= (e.g. from a catalog detail page),
+  // then clean the URL so refreshing doesn't re-ask.
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q && !autoAskedRef.current) {
+      autoAskedRef.current = true;
+      setSearchParams({}, { replace: true });
+      handleSubmit(q);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className="flex flex-col h-[calc(100vh-12rem)]">
       {/* Messages */}
@@ -407,22 +174,22 @@ function ChatTab() {
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <div className="glass-card rounded-3xl p-8 max-w-md">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center border border-primary/10 mx-auto mb-5">
-                <Shield className="w-7 h-7 text-primary" />
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[oklch(0.76_0.17_65/0.3)] to-[oklch(0.72_0.19_340/0.15)] flex items-center justify-center border border-white/10 mx-auto mb-5">
+                <Shield className="w-7 h-7 text-[oklch(0.85_0.14_75)]" />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">
-                Ask Cognivolt AI
+                Ask BIS Cognivolt AI
               </h3>
               <p className="text-sm text-muted-foreground mb-6">
-                Get expert answers about BIS certification, Indian Standards,
-                ISI marks, CRS registration, and more.
+                Get thorough answers about BIS certification, Indian Standards,
+                hallmarking and compliance — in English or any Indian language.
               </p>
               <div className="grid grid-cols-2 gap-2">
-                {SAMPLE_QUESTIONS.slice(0, 4).map((q) => (
+                {SAMPLE_QUESTIONS.map((q) => (
                   <button
                     key={q}
                     onClick={() => handleSubmit(q)}
-                    className="glass-input rounded-xl px-3 py-2.5 text-xs text-left text-foreground hover:bg-white/70 transition-all cursor-pointer"
+                    className="glass-input rounded-xl px-3 py-2.5 text-xs text-left text-foreground hover:border-primary/40 transition-all cursor-pointer"
                   >
                     {q}
                   </button>
@@ -459,18 +226,19 @@ function ChatTab() {
           }}
           className="glass-panel rounded-2xl flex items-center gap-2 p-2"
         >
+          <Languages className="ml-2 h-4 w-4 flex-shrink-0 text-primary/70" />
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about BIS certification, standards, or compliance..."
+            placeholder="Ask about BIS in any language — English, हिंदी, தமிழ், తెలుగు…"
             disabled={isLoading}
-            className="flex-1 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 outline-none"
+            className="flex-1 bg-transparent px-1 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 outline-none"
           />
           <button
             type="submit"
             disabled={!input.trim() || isLoading}
-            className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center text-primary-foreground disabled:opacity-40 hover:from-primary hover:to-primary transition-all cursor-pointer"
+            className="w-10 h-10 rounded-xl bg-gradient-to-br from-[oklch(0.78_0.17_65)] to-[oklch(0.72_0.19_340)] flex items-center justify-center text-[oklch(0.2_0.05_274)] disabled:opacity-40 hover:opacity-90 transition-all cursor-pointer"
           >
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -484,92 +252,20 @@ function ChatTab() {
   );
 }
 
-function CategoriesTab() {
-  const [openCategory, setOpenCategory] = useState<string | null>(null);
-  const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
-
-  const askAbout = (product: string) => {
-    if (!isAuthenticated) {
-      navigate(
-        `/auth?returnTo=${encodeURIComponent(`/dashboard?q=What is the certification process for ${product}?`)}`,
-      );
-    } else {
-      // Store the question in URL and redirect to home tab
-      window.location.href = `/dashboard?q=${encodeURIComponent(`What is the certification process for ${product}?`)}`;
-    }
-  };
-
+function StandardsTab() {
   return (
     <div>
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-          <FolderOpen className="w-5 h-5 text-primary" />
-          IS Code Explorer
+          <BookOpen className="w-5 h-5 text-primary" />
+          Standards catalog
         </h3>
         <p className="text-sm text-muted-foreground mt-1">
-          Browse product categories to find applicable IS standards and
-          certification schemes.
+          Search by product, standard number or test. Open any entry for key
+          tests and certification guidance.
         </p>
       </div>
-
-      <div className="space-y-3">
-        {Object.entries(CATEGORIES).map(([category, products]) => (
-          <div key={category} className="glass-card rounded-xl overflow-hidden">
-            <button
-              onClick={() =>
-                setOpenCategory(
-                  openCategory === category ? null : category,
-                )
-              }
-              className="w-full flex items-center justify-between px-5 py-3.5 text-left cursor-pointer hover:bg-white/30 transition-colors"
-            >
-              <span className="text-sm font-semibold text-foreground">
-                {category}
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">
-                  {Object.keys(products).length} standards
-                </span>
-                {openCategory === category ? (
-                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                ) : (
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                )}
-              </span>
-            </button>
-
-            {openCategory === category && (
-              <div className="border-t border-border/40 px-5 py-3 space-y-2">
-                {Object.entries(products).map(([product, info]) => (
-                  <div
-                    key={product}
-                    className="flex items-center justify-between py-2 border-b border-border/20 last:border-0"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground">
-                        {product}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        <span className="inline-flex items-center rounded-md bg-primary/8 px-2 py-0.5 text-xs font-medium text-primary mr-2">
-                          {info.scheme}
-                        </span>
-                        {info.is}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => askAbout(product)}
-                      className="ml-3 flex-shrink-0 glass-input rounded-lg px-3 py-1.5 text-xs font-medium text-primary hover:bg-white/60 transition-colors cursor-pointer"
-                    >
-                      Ask <ArrowRight className="w-3 h-3 inline ml-0.5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+      <CatalogBrowser />
     </div>
   );
 }
@@ -596,11 +292,11 @@ function ChecklistsTab() {
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
           <CheckSquare className="w-5 h-5 text-primary" />
-          Certification Checklists
+          Certification checklists
         </h3>
         <p className="text-sm text-muted-foreground mt-1">
           Step-by-step checklists for each BIS certification scheme. Track your
-          progress.
+          progress as you go.
         </p>
       </div>
 
@@ -621,9 +317,9 @@ function ChecklistsTab() {
               </div>
 
               {/* Progress bar */}
-              <div className="w-full h-1.5 rounded-full bg-primary/10 mb-4">
+              <div className="w-full h-1.5 rounded-full bg-primary/15 mb-4">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70 transition-all duration-500"
+                  className="h-full rounded-full bg-gradient-to-r from-[oklch(0.78_0.17_65)] to-[oklch(0.72_0.19_340)] transition-all duration-500"
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -634,15 +330,15 @@ function ChecklistsTab() {
                     key={i}
                     className={`flex items-start gap-3 py-2 px-3 rounded-lg cursor-pointer transition-colors ${
                       checked.has(i)
-                        ? "bg-primary/5"
-                        : "hover:bg-white/30"
+                        ? "bg-primary/10"
+                        : "hover:bg-white/5"
                     }`}
                   >
                     <input
                       type="checkbox"
                       checked={checked.has(i)}
                       onChange={() => toggleCheck(scheme, i)}
-                      className="mt-0.5 w-4 h-4 rounded border-border accent-primary cursor-pointer"
+                      className="mt-0.5 w-4 h-4 rounded border-border accent-[oklch(0.78_0.17_65)] cursor-pointer"
                     />
                     <span
                       className={`text-sm leading-relaxed ${
@@ -724,11 +420,11 @@ function FeeCalculatorTab() {
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
           <Calculator className="w-5 h-5 text-primary" />
-          BIS Fee Calculator
+          BIS fee calculator
         </h3>
         <p className="text-sm text-muted-foreground mt-1">
-          Estimate marking fees with MSME concessions. Figures are approximate
-          — verify on bis.gov.in/fee-structure.
+          Estimate marking fees with MSME concessions. Figures are approximate —
+          verify on bis.gov.in/fee-structure.
         </p>
       </div>
 
@@ -781,7 +477,7 @@ function FeeCalculatorTab() {
                 type="checkbox"
                 checked={isWoman}
                 onChange={(e) => setIsWoman(e.target.checked)}
-                className="w-4 h-4 rounded border-border accent-primary cursor-pointer"
+                className="w-4 h-4 rounded border-border accent-[oklch(0.78_0.17_65)] cursor-pointer"
               />
               <span className="text-sm text-foreground">
                 Women Entrepreneur
@@ -793,7 +489,7 @@ function FeeCalculatorTab() {
                 type="checkbox"
                 checked={isNE}
                 onChange={(e) => setIsNE(e.target.checked)}
-                className="w-4 h-4 rounded border-border accent-primary cursor-pointer"
+                className="w-4 h-4 rounded border-border accent-[oklch(0.78_0.17_65)] cursor-pointer"
               />
               <span className="text-sm text-foreground">
                 North-East Unit
@@ -804,7 +500,7 @@ function FeeCalculatorTab() {
 
         <button
           onClick={calculate}
-          className="mt-6 w-full sm:w-auto rounded-xl bg-gradient-to-r from-primary to-primary/80 px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:from-primary hover:to-primary transition-all cursor-pointer"
+          className="mt-6 w-full sm:w-auto rounded-xl bg-gradient-to-r from-[oklch(0.78_0.17_65)] to-[oklch(0.72_0.19_340)] px-6 py-2.5 text-sm font-semibold text-[oklch(0.2_0.05_274)] hover:opacity-90 transition-all cursor-pointer"
         >
           Calculate Fee
         </button>
@@ -827,7 +523,7 @@ function FeeCalculatorTab() {
                 <span className="text-muted-foreground">
                   Concession ({result.concessionPct}%)
                 </span>
-                <span className="font-medium text-green-600">
+                <span className="font-medium text-[oklch(0.78_0.15_150)]">
                   -₹{result.concessionAmount.toLocaleString("en-IN")}
                 </span>
               </div>
@@ -843,7 +539,7 @@ function FeeCalculatorTab() {
 
             {scheme === "FMCS" && (
               <div className="mt-4 flex items-start gap-2 text-xs text-muted-foreground">
-                <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <span className="mt-0.5">ℹ️</span>
                 <span>
                   FMCS fees are payable in USD. Marking fee typically $0.50–$2
                   per unit. Inspection charges are additional.
@@ -854,7 +550,7 @@ function FeeCalculatorTab() {
         )}
 
         <div className="mt-4 flex items-start gap-2 text-xs text-muted-foreground">
-          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+          <span className="mt-0.5">⚠️</span>
           <span>
             Scrutiny fee (₹1,000 for ISI/CRS, ₹5,000 for FMCS) and license
             fee (₹1,000/year) are separate. Verify latest fees on
@@ -882,8 +578,8 @@ export default function Dashboard() {
     <div className="glass-bg min-h-screen relative">
       {/* Floating orbs */}
       <div className="pointer-events-none absolute inset-0 z-0">
-        <div className="absolute top-10 right-[10%] w-64 h-64 rounded-full bg-[oklch(0.85_0.06_260)] opacity-25 blur-[80px] animate-float-slow" />
-        <div className="absolute bottom-20 left-[15%] w-56 h-56 rounded-full bg-[oklch(0.87_0.05_220)] opacity-20 blur-[70px] animate-float-medium" />
+        <div className="absolute top-10 right-[10%] w-64 h-64 rounded-full bg-[oklch(0.7_0.17_65)] opacity-25 blur-[90px] animate-float-slow" />
+        <div className="absolute bottom-20 left-[15%] w-56 h-56 rounded-full bg-[oklch(0.6_0.17_300)] opacity-20 blur-[80px] animate-float-medium" />
       </div>
 
       {/* Top Navigation */}
@@ -893,7 +589,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" />
               <span className="text-base font-semibold text-foreground tracking-tight">
-                Cognivolt AI
+                BIS Cognivolt AI
               </span>
             </div>
           </div>
@@ -928,14 +624,14 @@ export default function Dashboard() {
               className="data-[state=active]:glass-tab-trigger gap-1.5 px-4 py-2 cursor-pointer"
             >
               <Home className="w-4 h-4" />
-              <span className="hidden sm:inline">Home</span>
+              <span className="hidden sm:inline">Ask</span>
             </TabsTrigger>
             <TabsTrigger
-              value="categories"
+              value="standards"
               className="data-[state=active]:glass-tab-trigger gap-1.5 px-4 py-2 cursor-pointer"
             >
-              <FolderOpen className="w-4 h-4" />
-              <span className="hidden sm:inline">Categories</span>
+              <BookOpen className="w-4 h-4" />
+              <span className="hidden sm:inline">Standards</span>
             </TabsTrigger>
             <TabsTrigger
               value="checklists"
@@ -949,7 +645,7 @@ export default function Dashboard() {
               className="data-[state=active]:glass-tab-trigger gap-1.5 px-4 py-2 cursor-pointer"
             >
               <Calculator className="w-4 h-4" />
-              <span className="hidden sm:inline">Fee Calc</span>
+              <span className="hidden sm:inline">Fees</span>
             </TabsTrigger>
           </TabsList>
 
@@ -957,8 +653,8 @@ export default function Dashboard() {
             <ChatTab />
           </TabsContent>
 
-          <TabsContent value="categories">
-            <CategoriesTab />
+          <TabsContent value="standards">
+            <StandardsTab />
           </TabsContent>
 
           <TabsContent value="checklists">
@@ -974,7 +670,8 @@ export default function Dashboard() {
       {/* Footer */}
       <div className="relative z-10 text-center pb-6">
         <p className="text-xs text-muted-foreground">
-          Built for Smart India Hackathon 2026 — Team Cognivolt
+          BIS Cognivolt AI — Built for Smart India Hackathon 2026 · Team
+          Cognivolt
         </p>
       </div>
     </div>

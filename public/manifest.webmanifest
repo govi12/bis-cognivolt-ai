@@ -1,7 +1,7 @@
 {
-  "name": "freebuff.com application",
-  "short_name": "freebuff.com",
-  "description": "freebuff.com application",
+  "name": "BIS Cognivolt AI",
+  "short_name": "Cognivolt",
+  "description": "AI assistant for BIS certification, Indian Standards and hallmarking.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
