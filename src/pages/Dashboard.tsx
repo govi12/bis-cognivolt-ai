@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useAuth } from "@/hooks/use-auth";
-import { useNavigate, useSearchParams } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,7 +11,6 @@ import {
   Calculator,
   Send,
   Loader2,
-  LogOut,
   Sparkles,
   Shield,
   Languages,
@@ -565,14 +563,7 @@ function FeeCalculatorTab() {
 // ==================== MAIN DASHBOARD ====================
 
 export default function Dashboard() {
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("home");
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/");
-  };
 
   return (
     <div className="glass-bg min-h-screen relative">
@@ -595,18 +586,13 @@ export default function Dashboard() {
           </div>
 
           <div className="flex items-center gap-3">
-            {user?.name && (
-              <span className="text-xs text-muted-foreground hidden sm:block">
-                Hi, {user.name}
-              </span>
-            )}
-            <button
-              onClick={handleSignOut}
+            <Link
+              to="/catalog"
               className="glass-input rounded-xl px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5"
             >
-              <LogOut className="w-3.5 h-3.5" />
-              Sign out
-            </button>
+              <BookOpen className="w-3.5 h-3.5" />
+              Standards catalog
+            </Link>
           </div>
         </div>
       </nav>

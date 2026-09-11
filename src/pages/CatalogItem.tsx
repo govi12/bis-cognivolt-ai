@@ -140,7 +140,7 @@ function ItemPage({
             </p>
             <div className="mt-5 flex flex-col gap-3 sm:flex-row">
               <Link
-                to={`/dashboard?q=${encodeURIComponent(`What is the certification process for ${item.name} (${item.standard})?`)}`}
+                to={`/?q=${encodeURIComponent(`What is the certification process for ${item.name} (${item.standard})?`)}`}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-[oklch(0.72_0.19_340)] px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-opacity hover:opacity-90"
               >
                 Ask the assistant about this
