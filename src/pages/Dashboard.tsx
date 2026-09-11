@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useSearchParams } from "react-router";
 import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import ReactMarkdown, { type Components } from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CatalogBrowser from "@/components/CatalogBrowser";
 import {
@@ -76,6 +78,93 @@ const CHECKLISTS: Record<string, string[]> = {
 
 // ==================== COMPONENTS ====================
 
+// Shared component styles for markdown rendered inside assistant bubbles.
+// Defined at module level so the object identity is stable across renders.
+const markdownComponents: Components = {
+  p: ({ children }) => (
+    <p className="my-2 first:mt-0 last:mb-0">{children}</p>
+  ),
+  ul: ({ children }) => (
+    <ul className="my-2 list-disc space-y-1 pl-5">{children}</ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="my-2 list-decimal space-y-1 pl-5">{children}</ol>
+  ),
+  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+  strong: ({ children }) => (
+    <strong className="font-semibold text-foreground">{children}</strong>
+  ),
+  em: ({ children }) => <em className="italic">{children}</em>,
+  h1: ({ children }) => (
+    <h1 className="mt-4 mb-2 text-base font-bold first:mt-0">{children}</h1>
+  ),
+  h2: ({ children }) => (
+    <h2 className="mt-4 mb-2 text-[15px] font-bold first:mt-0">{children}</h2>
+  ),
+  h3: ({ children }) => (
+    <h3 className="mt-3 mb-1.5 text-sm font-semibold first:mt-0">{children}</h3>
+  ),
+  h4: ({ children }) => (
+    <h4 className="mt-3 mb-1.5 text-sm font-semibold first:mt-0">{children}</h4>
+  ),
+  a: ({ children, href }) => (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-primary underline underline-offset-2 transition-opacity hover:opacity-80"
+    >
+      {children}
+    </a>
+  ),
+  code: ({ children, className }) => {
+    const isBlock = typeof className === "string" && className.includes("language-");
+    return (
+      <code
+        className={
+          isBlock
+            ? "font-mono text-xs text-foreground"
+            : "rounded bg-white/10 px-1.5 py-0.5 font-mono text-[0.85em] text-foreground"
+        }
+      >
+        {children}
+      </code>
+    );
+  },
+  pre: ({ children }) => (
+    <pre className="my-2 overflow-x-auto rounded-xl bg-black/30 p-3 text-xs">
+      {children}
+    </pre>
+  ),
+  blockquote: ({ children }) => (
+    <blockquote className="my-2 border-l-2 border-primary/40 pl-3 text-muted-foreground">
+      {children}
+    </blockquote>
+  ),
+  hr: () => <hr className="my-3 border-border/40" />,
+  table: ({ children }) => (
+    <table className="my-2 w-full border-collapse text-xs">{children}</table>
+  ),
+  th: ({ children }) => (
+    <th className="border border-border/40 bg-muted/40 px-2 py-1.5 text-left font-semibold">
+      {children}
+    </th>
+  ),
+  td: ({ children }) => (
+    <td className="border border-border/40 px-2 py-1.5 align-top">{children}</td>
+  ),
+};
+
+function MarkdownContent({ content }: { content: string }) {
+  return (
+    <div className="text-sm">
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+        {content}
+      </ReactMarkdown>
+    </div>
+  );
+}
+
 function ChatMessage({
   role,
   content,
@@ -93,11 +182,15 @@ function ChatMessage({
             : "glass-bubble-assistant text-foreground"
         }`}
       >
-        {content.split("\n").map((line, i) => (
-          <p key={i} className={i > 0 ? "mt-2" : ""}>
-            {line}
-          </p>
-        ))}
+        {isUser ? (
+          content.split("\n").map((line, i) => (
+            <p key={i} className={i > 0 ? "mt-2" : ""}>
+              {line}
+            </p>
+          ))
+        ) : (
+          <MarkdownContent content={content} />
+        )}
       </div>
     </div>
   );
