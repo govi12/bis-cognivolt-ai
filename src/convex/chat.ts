@@ -123,7 +123,7 @@ ${convo}
 Answer the latest User message above. If it refers back to something earlier in the conversation, use that earlier context. When your answer references a specific fact from the reference information, mention the relevant IS standard number or scheme name.`;
 
     const response = await ai.models.generateContentStream({
-      model: "gemini-2.0-flash",
+      model: "gemini-3.6-flash",
       contents: prompt,
     });
 
