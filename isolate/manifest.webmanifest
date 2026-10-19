@@ -1,0 +1,17 @@
+{
+  "name": "BIS Cognivolt AI",
+  "short_name": "Cognivolt",
+  "description": "AI assistant for BIS certification, Indian Standards and hallmarking.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
